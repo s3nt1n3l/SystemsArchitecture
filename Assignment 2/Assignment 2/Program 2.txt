@@ -1,0 +1,45 @@
+void setup() {
+  Serial.begin(9600);
+}
+void loop()
+{
+  Serial.print("Input a number in range -128 to 127 : ");
+  int n = readInt(); //makes n equal to the current index of the array
+  String m = decimalToBinary("bin= ", n); //m equals the string "bin= " and the input n converted to binary
+  Serial.println(m + " " + n); //prints m ("bin= " and the binary of input), a space and then print n (input). 
+}
+int readInt()
+{
+  char array[16]; //creates an array of 16 bits
+  int i=0;
+  while(true) //while there is a serial available, without this it continuously loops.
+  {
+    if(Serial.available()>0) //when something is input to the serial monitor do this
+    {
+      char inputChar = (char)Serial.read(); //Makes inputChar the character that was input
+      if(inputChar=='\n') //if nothing was input (a newline was input) do this
+      {
+        array[i] = '\0'; //if nothing is input, makes current index in array 0
+        break; //leave if statement
+      }
+      else
+      {
+        array[i] = inputChar; //makes the current index in array equal to the input
+        i++; //move to next index in array
+      }
+    }
+  }
+  return atoi(array); //returns the array
+}
+String decimalToBinary(String message, byte n)
+{
+  String bin = message; //makes bin hold String message
+  int quotient = 128; //the quotient or base of binary
+  int decimal = n; //makes decimal equal n (input)
+  for (int index = 0; index < 8; index++) //repeats 8 times because 8 bits are needed
+  {
+    bin = bin + ((decimal / quotient) % 2); //Works out the current decimal index in binary using modulus (bin=mod(decimal/quotient,2))
+    quotient = quotient / 2; //halves the quotient each loop to get each base needed to divide the decimal by. e.g.128,64,32,16,8,4,2,1
+  }
+  return bin; //returns bin which now holds message and the input in binary
+}

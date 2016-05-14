@@ -1,0 +1,157 @@
+int readInt();
+String decimalToBinary(String message, byte n);
+extern void trace(word BR, word AD, byte n) asm("TRACE");
+int signedMult(char multiplier, char multiplicand);
+
+void setup()
+{
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+}
+
+void loop()
+{
+  // put your main code here, to run repeatedly:
+  Serial.print("Input Multiplicand :");
+  int multiplicand = readInt();  //sets multiplicand to input
+  Serial.println(decimalToBinary( " ", multiplicand) + " " + multiplicand); //prints multiplicand input in binary and decimal
+
+  Serial.print("Input Multiplier   :");
+  int multiplier = readInt(); //sets multiplier to input
+  Serial.println(decimalToBinary( " ", multiplier) + " " + multiplier + "\n"); //prints multiplier input in binary and decimal
+  int expected = multiplier * multiplicand; //sets expected to the result of multiplier x multiplicand
+  int signedMult(char multiplier, char multiplicand); //calls the method signedMult
+
+  int product = signedMult(multiplier, multiplicand); //sets product to the integer returned from signedMult
+  Serial.print("product=");
+  Serial.print(product + " "); //prints product
+
+  Serial.print("expected=");
+  Serial.print(expected); //prints expected
+
+  if (product == expected) //if the product is the same as the expected outcome then it works
+  {
+    Serial.println(" ok :) \n");
+  }
+  else //else print a new line
+  {
+    Serial.println("\n");
+  }
+}
+
+int signedMult(char multiplier, char muliplicand)
+{
+  asm volatile(
+    "   clc                         ;                                     \n"
+    "   ldi       r23,0             ; A = 0                               \n"
+    "   ldi       r25,0             ; B = 0                               \n"
+    "   ldi       r20,8             ; N = 8                               \n"
+    "   call      dumpRegs          ;                                     \n"
+    "Start:                         ;                                     \n"
+    "   sbrc      r24,0             ;                                     \n"
+    "   call      add               ;                                     \n" 
+    "   call      shift             ;                                     \n"
+    "   dec       r20               ;                                     \n"
+    "   brne      Start             ;                                     \n"
+    "   sbrc      r22,7             ;                                     \n"
+    "   neg       r22               ;                                     \n"
+    "   sbrc      r25,7             ;                                     \n"
+    "   call      add               ;                                     \n"
+    "   sbrc      r25,7             ;                                     \n"
+    "   call      shift             ;                                     \n"
+    "   dec       r20               ;                                     \n"
+    "   mov       r24,r23           ;                                     \n"
+    "   ret                         ;                                     \n"
+  );
+  delay(0);
+  asm("pop r25");
+  asm("pop r24");
+}
+
+// Global inline assembly language subroutines
+asm volatile(
+  "dumpRegs:   push r20           ; save the loop count n               \n"
+  "            push r22           ; save the multiplicand, Yreg         \n"
+  "            push r23           ; save the loop count, Nreg           \n"
+  "            push r24           ; save the product lo byte Pl         \n"
+  "            push r25           ; save the product hi byte Ph         \n"
+  "            in r16, __SREG__   ; save the status register SREG       \n"
+  "            call TRACE         ; call the C function trace()         \n"
+  "            out __SREG__, r16  ; restore the status register, SREG   \n"
+  "            pop r25            ; restore working registers....       \n"
+  "            pop r24            ; note that these must be popped off  \n"
+  "            pop r23            ; the stack in reverse order to that  \n"
+  "            pop r22            ; in which they were pushed           \n"
+  "            pop r20            ; in which they were pushed           \n"
+  "            ret                ; return back to multiplication       \n"
+  // put your add and shift subroutines here);
+
+  "add:                           ; adds multiplier to multiplicand     \n"
+  "            add      r25,r22   ;                                     \n"
+  "            call dumpRegs      ; calls dumpRegs                      \n"
+  "            ret                ; return                              \n"
+
+  "shift:                         ; shifts                              \n"
+  "            ASR r24            ;                                     \n"
+  "            ASR r25            ;                                     \n"
+  "            ror r23            ;                                     \n"
+  "            call dumpRegs      ; calls dumpRegs                      \n"
+  "            ret                ; return                              \n"
+);
+
+
+
+
+
+
+int readInt()
+{
+  char array[16]; //creates an array of 16 bits
+  int i = 0;
+  while (true) //while there is a serial available, without this it continuously loops.
+  {
+    if (Serial.available() > 0) //when something is input to the serial monitor do this
+    {
+      char inputChar = (char)Serial.read(); //Makes inputChar the character that was input
+      if (inputChar == '\n') //if nothing was input (a newline was input) do this
+      {
+        array[i] = '\0'; //if nothing is input, makes current index in array 0
+        break; //leave if statement
+      }
+      else
+      {
+        array[i] = inputChar; //makes the current index in array equal to the input
+        i++; //move to next index in array
+      }
+    }
+  }
+  return atoi(array); //returns the array
+}
+
+String decimalToBinary(String message, byte n)
+{
+  String bin = message; //makes bin hold String message
+  int quotient = 128; //the quotient or base of binary
+  int decimal = n; //makes decimal equal n (input)
+  for (int index = 0; index < 8; index++) //repeats 8 times because 8 bits are needed
+  {
+    bin = bin + ((decimal / quotient) % 2); //Works out the current decimal index in binary using modulus (bin=mod(decimal/quotient,2))
+    quotient = quotient / 2; //halves the quotient each loop to get each base needed to divide the decimal by. e.g.128,64,32,16,8,4,2,1
+  }
+  return bin; //returns bin which now holds message and the input in binary
+}
+
+void trace(word BR, word AD, byte N)
+{
+  int R = BR & BR; //& operator copies a bit if the result exists in both operands. so this makes R the bits copied from both operands.
+  int B = BR >> 8; //makes B, BR right shifted by 8 bits
+  int D = AD & AD; //this makes D the bits copied from both operands.
+  int A = AD >> 8; //makes A, AD right shifted by 8 bits
+  String NN = "n=";
+  NN = NN + N; //makes NN hold "n=" and the byte N
+  Serial.print(NN); //prints NN, ("n="N)
+  Serial.print(decimalToBinary("\t D=", D)); //converts D to binary and prints it. \t makes a tab.
+  Serial.print(decimalToBinary("\t B=", B)); //converts B to binary and prints it.
+  Serial.print(decimalToBinary("\t A=", A)); //converts A to binary and prints it.
+  Serial.println(decimalToBinary("\t R=", R)); //converts R to binary and prints it.
+}

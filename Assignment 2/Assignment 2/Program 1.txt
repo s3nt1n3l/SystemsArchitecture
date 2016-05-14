@@ -1,0 +1,33 @@
+void setup() {
+  Serial.begin(9600);
+}
+void loop() 
+{
+    Serial.print("Please input an integer : "); //outputs message "Please input an integer"
+    int n=readInt(); //makes n equal to the current index of the array
+    Serial.println(n); //outputs n, which will be what was input
+}
+
+int readInt()
+{
+  char array[16]; //creates an array of 16 bits
+  int i=0;
+  while(true) //while there is a serial available, without this it continuously loops.
+  {
+    if(Serial.available()>0) //when something is input to the serial monitor do this
+    {
+      char inputChar = (char)Serial.read(); //Makes inputChar the character that was input
+      if(inputChar=='\n') //if nothing was input (a newline was input) do this
+      {
+        array[i] = '\0'; //if nothing is input, makes current index in array 0
+        break; //leave if statement
+      }
+      else
+      {
+        array[i] = inputChar; //makes the current index in array equal to the input
+        i++; //move to next index in array
+      }
+    }
+  }
+  return atoi(array); //returns the array
+}

@@ -1,0 +1,68 @@
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  Serial.print("Input BR in range -32768 to 32767 : ");
+  int BR = readInt(); //holds 1st input in BR
+  Serial.println(BR); //prints BR
+  Serial.print("Input AD in range -32768 to 32767 : ");
+  int AD = readInt(); //hold 2nd input in AD
+  Serial.println(AD); //prints AD
+  Serial.print("Input n in range 1 to 8      : ");
+  int N = readInt(); //hold 3rd input in N
+  Serial.println(N); //prints N
+  trace(BR, AD, N); //calls method trace(BR, AD, N) which prints 
+  Serial.println();
+}
+int readInt()
+{
+  char array[16]; //creates an array of 16 bits
+  int i=0;
+  while(true) //while there is a serial available, without this it continuously loops.
+  {
+    if(Serial.available()>0) //when something is input to the serial monitor do this
+    {
+      char inputChar = (char)Serial.read(); //Makes inputChar the character that was input
+      if(inputChar=='\n') //if nothing was input (a newline was input) do this
+      {
+        array[i] = '\0'; //if nothing is input, makes current index in array 0
+        break; //leave if statement
+      }
+      else
+      {
+        array[i] = inputChar; //makes the current index in array equal to the input
+        i++; //move to next index in array
+      }
+    }
+  }
+  return atoi(array); //returns the array
+}
+String decimalToBinary(String message, byte n)
+{
+  String bin = message; //makes bin hold String message
+  int quotient = 128; //the quotient or base of binary
+  int decimal = n; //makes decimal equal n (input)
+  for (int index = 0; index < 8; index++) //repeats 8 times because 8 bits are needed
+  {
+    bin = bin + ((decimal / quotient) % 2); //Works out the current decimal index in binary using modulus (bin=mod(decimal/quotient,2))
+    quotient = quotient / 2; //halves the quotient each loop to get each base needed to divide the decimal by. e.g.128,64,32,16,8,4,2,1
+  }
+  return bin; //returns bin which now holds message and the input in binary
+}
+void trace(word BR, word AD, byte N)
+{
+  int R = BR & BR; //& operator copies a bit if the result exists in both operands. so this makes R the bits copied from both operands.
+  int B = BR >> 8; //makes B, BR right shifted by 8 bits
+  int D = AD & AD; //this makes D the bits copied from both operands.
+  int A = AD >> 8; //makes A, AD right shifted by 8 bits
+  String NN = "n=";
+  NN=NN+N; //makes NN hold "n=" and the byte N
+  Serial.print(NN); //prints NN, ("n="N)
+  Serial.print(decimalToBinary("\t D=", D)); //converts D to binary and prints it. \t makes a tab. 
+  Serial.print(decimalToBinary("\t B=", B)); //converts B to binary and prints it.
+  Serial.print(decimalToBinary("\t A=", A)); //converts A to binary and prints it.
+  Serial.print(decimalToBinary("\t R=", R)); //converts R to binary and prints it.
+}
